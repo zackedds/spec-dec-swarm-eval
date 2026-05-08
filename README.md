@@ -15,19 +15,29 @@ cost — the regime where algorithmic improvements actually pay off.
 - 1× NVIDIA GPU with **≥48 GB VRAM** (verified on RTX A6000, sm_86; should also
   work on A100 80 GB, H100, RTX 6000 Ada — anything that fits a 42 GB Q4_K_M
   weight + KV cache).
-- ~50 GB free disk for model weights.
-- ~12 GB free disk for the llama.cpp CUDA build tree.
+- **~60 GB free disk** for the 42 GB target + 750 MB draft + 12 GB llama.cpp
+  build tree + headroom. `setup.sh` pre-flights this.
 - CUDA 12.x with `nvcc` and matching driver. The default config pins
-  `sm_86`; pass `CUDA_ARCH=89` (for L40), `90` (for H100/H200), etc., to
-  setup.sh to override.
+  `sm_86`; override via `CUDA_ARCH=89` (L40), `90` (H100/H200), etc.
 - gcc-11 (gcc-12+ is rejected by NVCC for some kernels), cmake 3.22+, git, python3.10+.
+
+If your gcc-11 isn't at `/usr/bin/gcc-11` (e.g., devtoolset on RHEL,
+`/usr/local/bin/gcc-11` on macOS-built CUDA), set:
+
+```bash
+GCC_HOST=/path/to/gcc-11 GXX_HOST=/path/to/g++-11 ./setup.sh
+```
+
+If you swap `SPEC_DEC_TARGET` / `SPEC_DEC_DRAFT` to a **gated** HuggingFace
+repo (e.g., the Meta originals), run `huggingface-cli login` before invoking
+`setup.sh` so the download has a token.
 
 ## Quick start
 
 ```bash
 git clone https://github.com/zackedds/spec-dec-swarm-eval.git
 cd spec-dec-swarm-eval
-./setup.sh                 # ~30 min cold (clone llama.cpp, build CUDA, download 43 GB models)
+./setup.sh                 # 10–30 min depending on network (clone llama.cpp, build CUDA, download 43 GB models)
 cd evaluator
 ./task-eval --tier fast    # ~3 min on canonical baseline → SCORE: ~2.57x
 ```
@@ -41,11 +51,15 @@ editable file), runs it on the configured prompt subset, scores it, prints
 Same scoring methodology in all three; trade wall-clock for statistical
 confidence.
 
+Wall-time numbers below are measured on the canonical baseline (Llama-3.3-70B
+target + Llama-3.2-1B draft, A6000 sm_86, ~4.0 s/prompt). Agent recipes that
+generate longer / more drafted tokens may run somewhat slower per prompt.
+
 | Tier | Prompts | Wall time | CV | Use case |
 |---|---|---|---|---|
-| `fast` | 40 (stratified, all 13 cats) | ~3 min | ~5% | **Swarm inner loop.** Distinguishes recipes that differ by ≥10%. |
-| `medium` | 80 (stratified) | ~10 min | ~3.5% | **Round-end candidate validation.** |
-| `full` | 480 (full Spec-Bench) | ~60–90 min | ~1.5% | **Paper-grade final number.** |
+| `fast` | 40 (stratified, all 13 cats) | ~2.8 min | ~5% | **Swarm inner loop.** Distinguishes recipes that differ by ≥10%. |
+| `medium` | 80 (stratified) | ~5.5 min | ~3.5% | **Round-end candidate validation.** |
+| `full` | 480 (full Spec-Bench) | ~32 min | ~1.5% | **Paper-grade final number.** |
 
 Reference data for all three tiers is shipped pre-generated in
 `evaluator/{prompts,reference}_*.jsonl`. Reference token IDs are tied to the
@@ -220,7 +234,7 @@ If you use this benchmark in academic work:
 ```bibtex
 @software{spec_dec_swarm_eval,
   title  = {spec-dec-swarm-eval: Speculative Decoding Optimization Benchmark for Agent Swarms},
-  author = {Edds, Zack and Virk, Yuvraj and Zhang, Lingming},
+  author = {Edds, Zack},
   year   = {2026},
   url    = {https://github.com/zackedds/spec-dec-swarm-eval},
 }

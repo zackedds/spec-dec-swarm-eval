@@ -114,6 +114,21 @@ if [ ! -x "$CUDA_HOME/bin/nvcc" ]; then
 fi
 echo "  OK: nvcc ($("$CUDA_HOME/bin/nvcc" --version | sed -n 's/.*release \([0-9.]*\),.*/\1/p'))"
 
+# Disk pre-flight: ~60 GB needed (42 GB target + 1 GB draft + 12 GB build + headroom).
+NEED_GB=60
+AVAIL_GB="$(df -BG "$SPEC_DEC_ROOT" | awk 'NR==2 {gsub(/G/,"",$4); print $4}' 2>/dev/null || echo 0)"
+if [ "$AVAIL_GB" -lt "$NEED_GB" ] 2>/dev/null; then
+    echo "  WARNING: only ${AVAIL_GB} GB free at $SPEC_DEC_ROOT (need ~${NEED_GB} GB for models + build)"
+    echo "  Free up disk or set SPEC_DEC_ROOT/SPEC_DEC_MODELS_DIR/LLAMA_DIR to a larger volume."
+    if [ "$AVAIL_GB" -lt 50 ] 2>/dev/null; then
+        echo "  Aborting: <50 GB is too tight to even partial-download the target model." >&2
+        exit 1
+    fi
+    echo "  Proceeding anyway, but the 42 GB model download may fail mid-stream."
+else
+    echo "  OK: ${AVAIL_GB} GB free at $SPEC_DEC_ROOT (need ~${NEED_GB} GB)"
+fi
+
 # huggingface-cli is the recommended downloader; the newer 'hf' alias also works.
 HF=""
 if command -v huggingface-cli >/dev/null 2>&1; then
