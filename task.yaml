@@ -1,0 +1,55 @@
+task:
+  id: spec_dec
+  title: Speculative Decoding Algorithm Optimization
+  prompt:
+    template: |-
+      You are an expert in LLM inference optimization. Your task is to maximize
+      the wall-clock decoding throughput of speculative decoding for the model pair:
+        - Target: Llama-3.3-70B-Instruct (Q4_K_M quantization, ~42 GB)
+        - Draft:  Llama-3.2-1B-Instruct  (Q4_K_M quantization, ~750 MB)
+      Both pre-loaded onto GPU 0 (NVIDIA RTX A6000, 48 GB VRAM, sm_86, CUDA 12.9).
+
+      The file `workspace/initial_program.cpp` is a self-contained ~250-line C++
+      implementation of the canonical Leviathan/Chen 2022 speculative-decoding
+      algorithm: single-chain, fixed γ=8, strict greedy rejection sampling.
+      It links against llama.cpp's `llama` and `llama-common` libraries (already
+      built and cached) — only this single .cpp recompiles when you edit it
+      (~2.5 sec build cycle).
+
+      Your modified algorithm must remain LOSSLESS — output token sequence on
+      each prompt must closely match the canonical reference (LCS overlap ≥ 50%,
+      acceptance rate must stay in [5%, 90%]). Submissions that diverge are
+      scored 0.
+
+      You have full freedom to rewrite anything inside `initial_program.cpp`:
+      tree drafting, dynamic γ, retrieval / n-gram drafts, novel acceptance
+      rules (kept lossless WRT the LCS gate), KV cache strategies, etc.
+
+      The binary is invoked once per evaluation. `main()` loads target+draft,
+      then loops over prompts read from stdin (each prompt separated by
+      `\n<<END_PROMPT>>\n`). For each prompt, clear KV caches, run the
+      algorithm, and emit a block between `=== PROMPT i BEGIN ===` and
+      `=== PROMPT i END ===` containing per-prompt `decoded N tokens in T
+      seconds = X tok/s`, `n_drafted N`, `n_accept N`, and `TOKENS: id1 id2 ...`
+      lines. The canonical baseline you fork already implements this contract;
+      keep it intact even if you rewrite the algorithm.
+
+      Reference baseline performance: ~2.6× speedup over vanilla autoregressive
+      target-only decoding on the fast tier (40 prompts, stratified across all
+      13 Spec-Bench categories, max_new_tokens=128). Goal: beat this.
+
+      Score = mean(your_tok_per_sec) / mean(vanilla_tok_per_sec) over the
+      configured prompt tier (default fast, 40 prompts).
+
+      Evaluation:
+      - Run `./task-eval` (uses tier=fast by default)
+      - The evaluation timeout is {{ eval_timeout_seconds }} seconds
+  workspace_dir: workspace
+  evaluator_dir: evaluator
+
+evaluation:
+  # 7200s (2 hr) covers fast (~3 min) and medium (~10 min) with very wide
+  # margin. Full tier (~60–90 min) fits within this default after the
+  # persistent-process refactor (was ~3.5 hr before).
+  timeout_seconds: 7200
+  max_concurrent: 8
