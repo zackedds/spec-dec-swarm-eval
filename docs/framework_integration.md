@@ -87,11 +87,10 @@ re-test. The unit-of-test is `./task-eval --tier fast` against known cheats.
 
 ## Recommended swarm config
 
-Given the structural ceiling (~3.2× as a near-Pareto on this pair without
-trained heads, per the prior-run audit in `docs/prior_runs.md`):
-
-- **Iterations per agent:** 20–30 is sufficient. Beyond that, scores plateau
-  and variance dominates.
+- **Iterations per agent:** prior runs on this benchmark have plateaued
+  somewhere in the 7–15 iteration range. Twenty to thirty iterations is more
+  than enough; beyond that, run-to-run variance dominates the inner-loop
+  signal.
 - **Number of agents per round:** 8 fits on a typical 8-GPU box. Diversity
   comes from random seeds in agent reasoning, not parallel runs.
 - **Use `fast` tier for inner loop**, `medium` for promoting candidates,
@@ -113,10 +112,10 @@ trained heads, per the prior-run audit in `docs/prior_runs.md`):
 1. **CV calibration on this exact pair.** The fast/medium/full CV estimates in
    `methodology.md` are extrapolated. Worth running 5 seeds on the canonical
    baseline at each tier to nail down actual variance.
-2. **Direct comparison to Blazedit / Ouroboros K=1 / RASD on the same harness.**
-   The 3.18× / 3.91× speedup comparison in `prior_runs.md` is to canonical
-   Leviathan only. Same-harness numbers for those published methods would
-   strengthen any "matches state-of-the-art" claim.
+2. **Direct comparison to published spec-dec methods on this harness.** The
+   shipped baseline is canonical Leviathan only. Running published variants
+   (e.g. tree drafting, retrieval-augmented drafts) inside this harness
+   would let users compare against a stronger reference than vanilla.
 3. **Multi-GPU reference generation.** `generate_reference.py` runs on one GPU
    at a time. Splitting prompts across GPUs would cut full-tier ref-gen wall
    time from ~90 min to ~15 min.

@@ -122,21 +122,21 @@ Anti-cheat gates:
 
 See `docs/methodology.md` for the full discussion of why these thresholds.
 
-## Expected results
+## Expected baseline
 
-Reference values for orientation (your numbers will vary slightly per run):
+The canonical baseline scores (your numbers will vary by ~5% per run on fast
+tier, less on larger tiers):
 
-- **Vanilla** (target only, no spec-dec): ~15.5 tok/s (1.0×)
+- **Vanilla** (target only, no spec-dec): ~15.5 tok/s (1.0×, by definition)
 - **Canonical Leviathan** (γ=8, single chain, strict greedy):
   - fast tier (40 prompts): ~2.57×
   - medium tier (80 prompts): ~2.52×
   - full tier (480 prompts): ~2.67×
-- **Best from prior agent run**: ~3.18× on the legacy N=20 fast tier and
-  ~3.91× on full Spec-Bench (`max_new=256`). The recipe was a γ=16
-  chain-form draft with PLD-style 4-gram extension (essentially equivalent
-  to Blazedit / Ouroboros K=1; see `docs/prior_runs.md` for the audit).
-  The agent's source is **not shipped** — agents start from the canonical
-  Leviathan baseline.
+
+These are what an agent's recipe needs to beat. Prior agent runs on this
+benchmark have produced higher numbers; we deliberately don't publish the
+specific recipes or per-category breakdowns here, so each new run is an
+independent search of the design space.
 
 ## Directory layout
 
@@ -164,7 +164,6 @@ spec-dec-swarm-eval/
 │   └── spec_bench_questions.jsonl   # vendored from Spec-Bench (CC-BY)
 └── docs/
     ├── methodology.md           # algorithm, baseline, scoring rationale, gate thresholds
-    ├── prior_runs.md            # findings from the autoresearch run on this benchmark
     ├── framework_integration.md # notes for plugging this into a swarm framework
     └── build_llama_cpp.md       # manual fallback if setup.sh fails
 ```
@@ -216,15 +215,11 @@ whatever `initial_program.cpp` currently contains. No manual cleanup needed.
    simultaneously will race. Either serialize evals per `LLAMA_DIR` or give
    each concurrent agent its own `LLAMA_DIR` (override via the `LLAMA_DIR`
    env var). See `docs/framework_integration.md`.
-3. **Full-tier eval (~60–90 min) fits comfortably in `task.yaml`'s default
+3. **Full-tier eval (~32 min) fits comfortably in `task.yaml`'s default
    7200s timeout** — but you should still bump it externally if you've
    modified the algorithm to be slower than canonical, or your hardware
    is below the 48 GB / sm_86 reference target.
-4. **The best-known agent recipe on this benchmark is essentially equivalent
-   to Blazedit (HuggingFace blog, Oct 2025) and Ouroboros (EMNLP 2024, K=1
-   case)** — discovered after-the-fact via literature search. Not novel as a
-   pure algorithm. See `docs/prior_runs.md` for the audit.
-5. **Per-prompt failure rate ~10–15% on `full` tier** due to long-prompt
+4. **Per-prompt failure rate ~10–15% on `full` tier** due to long-prompt
    timeouts. Tier `full` tolerates up to 10% failures by default.
 
 ## Citation

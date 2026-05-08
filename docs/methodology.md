@@ -138,9 +138,9 @@ full). This gives 80% big / 20% small, mirroring full's 83/17 split, with a
 floor of 1 per category so the agent gets feedback on every category.
 
 The earlier N=20 fast tier was un-proportional (75/25, with 4 small categories
-entirely missing). For agents with category-specific recipes (e.g. PLD,
-which excels on translation and rag), the un-proportional fast tier
-under-estimated full-tier mean by ~10-15%, weakening the inner-loop signal.
+entirely missing). For agents with category-specific recipes the
+un-proportional fast tier under-estimated full-tier mean by ~10-15%,
+weakening the inner-loop signal.
 
 ## Reference data lifecycle
 
