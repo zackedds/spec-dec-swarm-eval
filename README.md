@@ -80,11 +80,15 @@ The `naive-spec` and `vanilla-bench` binaries load their target+draft models
 This avoids re-mmapping the 42 GB target between prompts and is roughly 5×
 faster on full-tier evals than the naive per-prompt-spawn pattern.
 
-`max_new_tokens=128`. Earlier proxy calibration at 256 produces speedup ratios
-~10–12% higher (because spec-dec's per-cycle setup amortizes better over more
-generated tokens), but the optimization landscape is preserved. For
-paper-grade absolute speedup numbers, re-run the agent's best recipe at
-`max_new=256` (or 1024 for Spec-Bench-leaderboard parity).
+`max_new_tokens=128`. **This is a deliberate inner-loop choice that affects
+the absolute speedup numbers** — spec-dec's per-cycle overhead amortizes
+over generated tokens, so the same algorithm reads higher at higher
+`max_new`. The canonical baseline measures 2.69× at `mn=128` and 3.57× at
+`mn=1024` (Spec-Bench leaderboard standard); the optimization gradient is
+preserved across the range but the absolute numbers shift. **For any
+externally reported number, re-run at `max_new=256` (most spec-dec papers)
+or `1024` (leaderboard parity)** before quoting it. Full sweep + reasoning
+in `docs/methodology.md`.
 
 ## What an agent does
 
