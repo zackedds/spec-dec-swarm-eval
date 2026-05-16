@@ -66,11 +66,13 @@ Reference data for all three tiers is shipped pre-generated in
 specific GGUF files setup.sh downloads — if you swap models, regenerate via
 `./setup.sh --regen-refs`.
 
-The fast tier is **proportionally stratified** to mirror full's category
-distribution (32 prompts from the 5 high-count categories, 1 from each of the
-8 low-count categories — 80% / 20% split, matching full's 83% / 17%). This
-keeps fast-tier mean an unbiased estimator of full-tier mean within sampling
-noise.
+The fast tier's 40 prompts are **data-driven-stratified**: per-prompt
+canonical-method speedups were measured on the full 480-prompt set across
+several γ variants, then a constrained search picked the 40-prompt subset
+whose mean tracks the full-tier mean within ~0.5% (vs ~4.5% on the previous
+a-priori-proportional subset). Allocation is 32 prompts from the 5 high-
+count categories + 1 each from the 8 low-count categories. Methodology in
+`docs/stratification.md`.
 
 ## Persistent-process model
 
